@@ -403,6 +403,9 @@ coreHelpers = function (ghost) {
                 errors.logAndThrowError('Invalid value, Next/Prev must be a number');
                 return;
             }
+            if (_.isString(this.pagination.total)) {
+                this.pagination.total = parseInt(this.pagination.total);
+            }
             if (!_.isNumber(this.pagination.page) || !_.isNumber(this.pagination.pages)
                     || !_.isNumber(this.pagination.total) || !_.isNumber(this.pagination.limit)) {
                 errors.logAndThrowError('Invalid value, check page, pages, limit and total are numbers');
