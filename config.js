@@ -27,10 +27,10 @@ config = {
         // ```
 
         database: {
-            client: 'sqlite3',
+            client: 'pg',
             connection: {
-                filename: path.join(__dirname, '/content/data/ghost-dev.db'),
-                // database: 'ghost'
+                // filename: path.join(__dirname, '/content/data/ghost-dev.db'),
+                database: 'ghost'
             },
             debug: false
         },
