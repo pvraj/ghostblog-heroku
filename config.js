@@ -69,7 +69,7 @@ config = {
             debug: false
         },
         server: {
-            host: 'localhost',
+            // host: 'localhost',
             port: process.env.PORT || 5000
         }
     }
