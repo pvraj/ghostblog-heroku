@@ -1,14 +1,14 @@
 // # Ghost Data API
 // Provides access to the data model
 
-var Ghost = require('../ghost'),
-    _ = require('underscore'),
-    when = require('when'),
-    errors = require('./errorHandling'),
-    permissions = require('./permissions'),
-    canThis = permissions.canThis,
+var Ghost        = require('../ghost'),
+    _            = require('underscore'),
+    when         = require('when'),
+    errors       = require('./errorHandling'),
+    permissions  = require('./permissions'),
+    canThis      = permissions.canThis,
 
-    ghost = new Ghost(),
+    ghost        = new Ghost(),
     dataProvider = ghost.dataProvider,
     posts,
     users,
@@ -81,7 +81,14 @@ posts = {
         }
 
         return canThis(this.user).remove.post(args.id).then(function () {
-            return dataProvider.Post.destroy(args.id);
+            return when(posts.read({id : args.id})).then(function (result) {
+                return dataProvider.Post.destroy(args.id).then(function () {
+                    var deletedObj = {};
+                    deletedObj.id = result.attributes.id;
+                    deletedObj.slug = result.attributes.slug;
+                    return deletedObj;
+                });
+            });
         }, function () {
             return when.reject("You do not have permission to remove posts.");
         });
@@ -221,7 +228,7 @@ settingsCollection = function (settings) {
 settingsFilter = function (settings, filter) {
     return _.object(_.filter(_.pairs(settings), function (setting) {
         if (filter) {
-            return _.some(filter.split(","), function (f) {
+            return _.some(filter.split(','), function (f) {
                 return setting[1].type === f;
             });
         }
@@ -301,6 +308,33 @@ settings = {
 
 // ## Request Handlers
 
+function invalidateCache(req, res, result) {
+    var parsedUrl = req._parsedUrl.pathname.replace(/\/$/, '').split('/'),
+        method = req.method,
+        endpoint = parsedUrl[3],
+        id = parsedUrl[4],
+        cacheInvalidate;
+    if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+        if (endpoint === 'settings' || endpoint === 'users') {
+            cacheInvalidate = "/*";
+        } else if (endpoint === 'posts') {
+            cacheInvalidate = "/, /page/*, /rss/, /rss/*";
+            if (id) {
+                if (result.toJSON) {
+                    cacheInvalidate += ', /' + result.toJSON().slug;
+                } else {
+                    cacheInvalidate += ', /' + result.slug;
+                }
+            }
+        }
+        if (cacheInvalidate) {
+            res.set({
+                "X-Cache-Invalidate": cacheInvalidate
+            });
+        }
+    }
+}
+
 // ### requestHandler
 // decorator for api functions which are called via an HTTP request
 // takes the API method and wraps it so that it gets data from the request and returns a sensible JSON response
@@ -312,6 +346,7 @@ requestHandler = function (apiMethod) {
             };
 
         return apiMethod.call(apiContext, options).then(function (result) {
+            invalidateCache(req, res, result);
             res.json(result || {});
         }, function (error) {
             error = {error: _.isString(error) ? error : (_.isObject(error) ? error.message : 'Unknown API Error')};

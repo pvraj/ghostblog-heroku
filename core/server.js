@@ -1,18 +1,20 @@
 // Module dependencies
-var express = require('express'),
-    when = require('when'),
-    _ = require('underscore'),
-    colors = require("colors"),
-    semver = require("semver"),
-    slashes = require("connect-slashes"),
-    errors = require('./server/errorHandling'),
-    admin = require('./server/controllers/admin'),
-    frontend = require('./server/controllers/frontend'),
-    api = require('./server/api'),
-    path = require('path'),
-    hbs = require('express-hbs'),
-    Ghost = require('./ghost'),
-    helpers = require('./server/helpers'),
+var express     = require('express'),
+    when        = require('when'),
+    _           = require('underscore'),
+    colors      = require('colors'),
+    semver      = require('semver'),
+    fs          = require('fs'),
+    slashes     = require('connect-slashes'),
+    errors      = require('./server/errorHandling'),
+    admin       = require('./server/controllers/admin'),
+    frontend    = require('./server/controllers/frontend'),
+    api         = require('./server/api'),
+    path        = require('path'),
+    hbs         = require('express-hbs'),
+    Ghost       = require('./ghost'),
+    helpers     = require('./server/helpers'),
+    middleware  = require('./server/middleware'),
     packageInfo = require('../package.json'),
 
 // Variables
@@ -112,7 +114,8 @@ function ghostLocals(req, res, next) {
             _.extend(res.locals,  {
                 currentUser: {
                     name: currentUser.attributes.name,
-                    profile: currentUser.attributes.image
+                    email: currentUser.attributes.email,
+                    image: currentUser.attributes.image
                 }
             });
             next();
@@ -128,8 +131,8 @@ function ghostLocals(req, res, next) {
 // Disable any caching until it can be done properly
 function disableCachedResult(req, res, next) {
     res.set({
-        "Cache-Control": "no-cache, must-revalidate",
-        "Expires": "Sat, 26 Jul 1997 05:00:00 GMT"
+        'Cache-Control': 'no-cache, must-revalidate',
+        'Expires': 'Sat, 26 Jul 1997 05:00:00 GMT'
     });
 
     next();
@@ -185,7 +188,7 @@ function activateTheme() {
     server.set('activeTheme', ghost.settings('activeTheme'));
     server.enable(server.get('activeTheme'));
     if (stackLocation) {
-        server.stack[stackLocation].handle = whenEnabled(server.get('activeTheme'), express['static'](ghost.paths().activeTheme));
+        server.stack[stackLocation].handle = whenEnabled(server.get('activeTheme'), middleware.staticTheme(ghost));
     }
 }
 
@@ -222,13 +225,15 @@ function manageAdminAndTheme(req, res, next) {
 // Expose the promise we will resolve after our pre-loading
 ghost.loaded = loading.promise;
 
-when.all([ghost.init(), helpers.loadCoreHelpers(ghost)]).then(function () {
+when(ghost.init()).then(function () {
+    return helpers.loadCoreHelpers(ghost);
+}).then(function () {
 
     // ##Configuration
     var oneYear = 31536000000;
 
     // Logging configuration
-    if (server.get('env') !== "development") {
+    if (server.get('env') !== 'development') {
         server.use(express.logger());
     } else {
         server.use(express.logger('dev'));
@@ -243,7 +248,7 @@ when.all([ghost.init(), helpers.loadCoreHelpers(ghost)]).then(function () {
     server.use('/shared', express['static'](path.join(__dirname, '/shared')));
     server.use('/content/images', express['static'](path.join(__dirname, '/../content/images')));
     // Serve our built scripts; can't use /scripts here because themes already are
-    server.use("/built/scripts", express['static'](path.join(__dirname, '/built/scripts'), {
+    server.use('/built/scripts', express['static'](path.join(__dirname, '/built/scripts'), {
         // Put a maxAge of one year on built scripts
         maxAge: oneYear
     }));
@@ -255,7 +260,7 @@ when.all([ghost.init(), helpers.loadCoreHelpers(ghost)]).then(function () {
     server.use('/ghost', whenEnabled('admin', express['static'](path.join(__dirname, '/client/assets'))));
 
     // Theme only config
-    server.use(whenEnabled(server.get('activeTheme'), express['static'](ghost.paths().activeTheme)));
+    server.use(whenEnabled(server.get('activeTheme'), middleware.staticTheme(ghost)));
 
     // Add in all trailing slashes
     server.use(slashes());
@@ -264,6 +269,7 @@ when.all([ghost.init(), helpers.loadCoreHelpers(ghost)]).then(function () {
     server.use(express.urlencoded());
     server.use('/ghost/upload/', express.multipart());
     server.use('/ghost/upload/', express.multipart({uploadDir: __dirname + '/content/images'}));
+    server.use('/ghost/debug/db/import/', express.multipart());
     server.use(express.cookieParser(ghost.dbHash));
     server.use(express.cookieSession({ cookie: { maxAge: 60000000 }}));
 
@@ -339,7 +345,11 @@ when.all([ghost.init(), helpers.loadCoreHelpers(ghost)]).then(function () {
     server.get('/ghost/debug/db/reset/', auth, admin.debug.reset);
     // We don't want to register bodyParser globally b/c of security concerns, so use multipart only here
     server.post('/ghost/upload/', admin.uploader);
-    server.get(/^\/(ghost$|(ghost-admin|admin|wp-admin|dashboard|signin)\/?)/, auth, function (req, res) {
+    // redirect to /ghost and let that do the authentication to prevent redirects to /ghost//admin etc.
+    server.get(/^\/((ghost-admin|admin|wp-admin|dashboard|signin)\/?)/, function (req, res) {
+        res.redirect('/ghost/');
+    });
+    server.get(/^\/(ghost$\/?)/, auth, function (req, res) {
         res.redirect('/ghost/');
     });
     server.get('/ghost/', redirectToSignup, auth, admin.index);
@@ -352,68 +362,87 @@ when.all([ghost.init(), helpers.loadCoreHelpers(ghost)]).then(function () {
     server.get('/:slug/', frontend.single);
     server.get('/', frontend.homepage);
 
+    // Are we using sockets? Custom socket or the default?
+    function getSocket() {
+        if (ghost.config().server.hasOwnProperty('socket')) {
+            return _.isString(ghost.config().server.socket) ? ghost.config().server.socket : path.join(__dirname, '../content/', process.env.NODE_ENV + '.socket');
+        }
+        return false;
+    }
 
+    function startGhost() {
+        // Tell users if their node version is not supported, and exit
+        if (!semver.satisfies(process.versions.node, packageInfo.engines.node)) {
+            console.log(
+                "\nERROR: Unsupported version of Node".red,
+                "\nGhost needs Node version".red,
+                packageInfo.engines.node.yellow,
+                "you are using version".red,
+                process.versions.node.yellow,
+                "\nPlease go to http://nodejs.org to get the latest version".green
+            );
+
+            process.exit(0);
+        }
+
+        // Startup & Shutdown messages
+        if (process.env.NODE_ENV === 'production') {
+            console.log(
+                "Ghost is running...".green,
+                "\nYour blog is now available on",
+                ghost.config().url,
+                "\nCtrl+C to shut down".grey
+            );
+
+            // ensure that Ghost exits correctly on Ctrl+C
+            process.on('SIGINT', function () {
+                console.log(
+                    "\nGhost has shut down".red,
+                    "\nYour blog is now offline"
+                );
+                process.exit(0);
+            });
+        } else {
+            console.log(
+                "Ghost is running...".green,
+                "\nListening on",
+                getSocket() || ghost.config().server.host + ':' + ghost.config().server.port,
+                "\nUrl configured as:",
+                ghost.config().url,
+                "\nCtrl+C to shut down".grey
+            );
+            // ensure that Ghost exits correctly on Ctrl+C
+            process.on('SIGINT', function () {
+                console.log(
+                    "\nGhost has shutdown".red,
+                    "\nGhost was running for",
+                    Math.round(process.uptime()),
+                    "seconds"
+                );
+                process.exit(0);
+            });
+        }
+
+        // Let everyone know we have finished loading
+        loading.resolve();
+    }
 
     // ## Start Ghost App
-    server.listen(
-        ghost.config().server.port,
-        ghost.config().server.host,
-        function () {
+    if (getSocket()) {
+        // Make sure the socket is gone before trying to create another
+        fs.unlink(getSocket(), function (err) {
+            server.listen(
+                getSocket(),
+                startGhost
+            );
+            fs.chmod(getSocket(), '0744');
+        });
 
-            // Tell users if their node version is not supported, and exit
-            if (!semver.satisfies(process.versions.node, packageInfo.engines.node)) {
-                console.log(
-                    "\nERROR: Unsupported version of Node".red,
-                    "\nGhost needs Node version".red,
-                    packageInfo.engines.node.yellow,
-                    "you are using version".red,
-                    process.versions.node.yellow,
-                    "\nPlease go to http://nodejs.org to get the latest version".green
-                );
-
-                process.exit(0);
-            }
-
-            // Startup & Shutdown messages
-            if (process.env.NODE_ENV === 'production') {
-                console.log(
-                    "Ghost is running...".green,
-                    "\nYour blog is now available on",
-                    ghost.config().url,
-                    "\nCtrl+C to shut down".grey
-                );
-
-                // ensure that Ghost exits correctly on Ctrl+C
-                process.on('SIGINT', function () {
-                    console.log(
-                        "\nGhost has shut down".red,
-                        "\nYour blog is now offline"
-                    );
-                    process.exit(0);
-                });
-            } else {
-                console.log(
-                    "Ghost is running...".green,
-                    "\nListening on",
-                    ghost.config().server.host + ':' + ghost.config().server.port,
-                    "\nUrl configured as:",
-                    ghost.config().url,
-                    "\nCtrl+C to shut down".grey
-                );
-                // ensure that Ghost exits correctly on Ctrl+C
-                process.on('SIGINT', function () {
-                    console.log(
-                        "\nGhost has shutdown".red,
-                        "\nGhost was running for",
-                        Math.round(process.uptime()),
-                        "seconds"
-                    );
-                    process.exit(0);
-                });
-            }
-
-            // Let everyone know we have finished loading
-            loading.resolve();
-        }
-    );
+    } else {
+        server.listen(
+            ghost.config().server.port,
+            ghost.config().server.host,
+            startGhost
+        );
+    }
 }, errors.logAndThrowError);

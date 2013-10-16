@@ -14,13 +14,12 @@ config = {
         // Visit http://docs.ghost.org/mail for instructions
         // ```
         //  mail: {
-        //      transport: 'sendgrid',
-        //      host: 'smtp.sendgrid.net',
+        //      transport: 'SMTP',
         //      options: {
-        //          service: 'Sendgrid',
+        //          service: 'Mailgun',
         //          auth: {
-        //              user: '', // Super secret username
-        //              pass: ''  // Super secret password
+        //              user: '', // mailgun username
+        //              pass: ''  // mailgun password
         //          }
         //      }
         //  },
@@ -34,7 +33,9 @@ config = {
             debug: false
         },
         server: {
+            // Host to be passed to node's `net.Server#listen()`
             host: '127.0.0.1',
+            // Port to be passed to node's `net.Server#listen()`, for iisnode set this to `process.env.PORT`
             port: '2368'
         }
     },
@@ -53,7 +54,9 @@ config = {
             debug: false
         },
         server: {
+            // Host to be passed to node's `net.Server#listen()`
             host: '127.0.0.1',
+            // Port to be passed to node's `net.Server#listen()`, for iisnode set this to `process.env.PORT`
             port: '2368'
         }
     },

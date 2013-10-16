@@ -937,7 +937,8 @@ nav li {
     speak: none;
     line-height: 1;
     -webkit-font-smoothing: antialiased;
-    content: "\e000"; }
+    content: "\e000";
+    line-height: 0; }
   .ghost-logo:hover {
     text-decoration: none; }
   .ghost-logo:hover {
@@ -1673,20 +1674,6 @@ nav li {
   background: rgba(0, 0, 0, 0.4);
   z-index: 1030; }
 
-body.blur > *:not(#modal-container) {
-  -webkit-transition: all 0.15s linear 0s;
-  -moz-transition: all 0.15s linear 0s;
-  transition: all 0.15s linear 0s;
-  -webkit-filter: blur(2px);
-  -moz-filter: blur(2px);
-  -ms-filter: blur(2px);
-  -o-filter: blur(2px);
-  -webkit-transform: translateZ(0);
-  -moz-transform: translateZ(0);
-  -ms-transform: translateZ(0);
-  -o-transform: translateZ(0);
-  transform: translateZ(0); }
-
 .modal-info, .modal-action, .modal {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -1710,20 +1697,24 @@ body.blur > *:not(#modal-container) {
     .modal-info, .modal-action, .modal {
       width: 100%;
       margin-left: 0; } }
+  .modal-info .image-uploader, .modal-action .image-uploader,
+  .modal-info .pre-image-uploader,
+  .modal-action .pre-image-uploader, .modal .image-uploader,
+  .modal .pre-image-uploader {
+    margin: 0; }
 
 .modal-action {
   padding: 60px 0 30px; }
   @media (max-width: 800px), (max-width: 800px) {
     .modal-action {
       padding: 30px 0; } }
-  .modal-action .modal-footer {
-    margin-top: 20px; }
 
 .modal-content {
   -webkit-box-sizing: padding-box;
   -moz-box-sizing: padding-box;
   box-sizing: padding-box;
   position: relative;
+  padding: 20px;
   background-clip: padding-box;
   background-color: #FFFFFF;
   border-radius: 2px;
@@ -1774,12 +1765,10 @@ body.blur > *:not(#modal-container) {
 .modal-body {
   position: relative;
   min-height: 100px;
-  padding: 0 20px;
   overflow-y: auto; }
 
 .modal-footer {
-  padding: 20px;
-  padding-top: 0; }
+  margin-top: 20px; }
 
 .modal-style-wide {
   width: 550px; }
@@ -1823,11 +1812,8 @@ main {
   text-transform: uppercase;
   font-size: 0.85em;
   color: #aaa9a2;
-  background: -moz-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
   background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, white), color-stop(25%, white), color-stop(100%, rgba(255, 255, 255, 0.9)));
   background: -webkit-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
-  background: -o-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
-  background: -ms-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
   background: linear, to bottom, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%; }
   .floatingheader button, .floatingheader .button {
     display: inline-block;
@@ -1904,7 +1890,8 @@ main {
   .image-uploader .centre {
     position: relative;
     top: 50px;
-    margin-bottom: -6px; }
+    display: block;
+    margin: 0 auto -6px auto; }
   .image-uploader .media:before {
     font-family: "Icons";
     font-weight: normal;
@@ -2073,7 +2060,8 @@ main {
   height: auto;
   color: #aaa9a2;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 2px; }
+  border-radius: 2px;
+  min-height: 46px; }
   .pre-image-uploader input {
     position: absolute;
     left: 9999px;
@@ -4334,11 +4322,8 @@ body.zen {
       margin-bottom: 0;
       border-bottom: none;
       box-shadow: #edece4 0 -1px 0 inset, #edece4 1px 0 0;
-      background: -moz-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
       background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, white), color-stop(25%, white), color-stop(100%, rgba(255, 255, 255, 0.9)));
       background: -webkit-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
-      background: -o-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
-      background: -ms-linear-gradient(top, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%);
       background: linear, to bottom, white 0%, white 25%, rgba(255, 255, 255, 0.9) 100%; }
       @media (max-width: 1000px), (max-width: 1000px) {
         .settings .settings-sidebar > header {

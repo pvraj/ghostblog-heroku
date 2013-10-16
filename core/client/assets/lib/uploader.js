@@ -7,7 +7,7 @@
 
     UploadUi = function ($dropzone, settings) {
         var source,
-            $url = '<div class="js-url"><input id="uploadurl" class="url" type="url" placeholder="http://"/></div>',
+            $url = '<div class="js-url"><input class="url js-upload-url" type="url" placeholder="http://"/></div>',
             $cancel = '<a class="image-cancel js-cancel"><span class="hidden">Delete</span></a>',
             $progress =  $('<div />', {
                 "class" : "js-upload-progress progress progress-success active",
@@ -22,8 +22,6 @@
         $.extend(this, {
             complete: function (result) {
                 var self = this;
-
-                $dropzone.trigger("uploadsuccess", [result, $dropzone.attr('id')]);
 
                 function showImage(width, height) {
                     $dropzone.find('img.js-upload-target').attr({"width": width, "height": height}).css({"display": "block"});
@@ -59,7 +57,6 @@
                     }).attr('src', result);
                 }
                 preLoadImage();
-
             },
 
             bindFileUpload: function () {
@@ -137,7 +134,7 @@
                 var self = this;
                 //This is the start point if no image exists
                 $dropzone.find('img.js-upload-target').css({"display": "none"});
-                $dropzone.removeClass('pre-image-uploader').addClass('image-uploader');
+                $dropzone.removeClass('pre-image-uploader image-uploader-url').addClass('image-uploader');
                 this.removeExtras();
                 this.buildExtras();
                 this.bindFileUpload();
@@ -148,6 +145,7 @@
             initUrl: function () {
                 var self = this, val;
                 this.removeExtras();
+                $dropzone.addClass('image-uploader-url').removeClass('pre-image-uploader');
                 $dropzone.find('.js-fileupload').addClass('right');
                 $dropzone.append($cancel);
                 $dropzone.find('.js-cancel').on('click', function () {
@@ -163,24 +161,34 @@
                 $dropzone.find('div.description').before($url);
 
                 $dropzone.find('.js-button-accept').on('click', function () {
+                    val = $dropzone.find('.js-upload-url').val();
                     $dropzone.find('div.description').hide();
-                    val = $('#uploadurl').val();
                     $dropzone.find('.js-fileupload').removeClass('right');
                     $dropzone.find('.js-url').remove();
                     $dropzone.find('button.centre').remove();
-                    self.complete(val);
+                    if (val === "") {
+                        $dropzone.trigger("uploadsuccess", 'http://');
+                        self.initWithDropzone();
+                    } else {
+                        self.complete(val);
+                    }
                 });
             },
             initWithImage: function () {
-                var self = this;
+                var self = this, val;
                 // This is the start point if an image already exists
                 source = $dropzone.find('img.js-upload-target').attr('src');
-                $dropzone.removeClass('image-uploader').addClass('pre-image-uploader');
+                $dropzone.removeClass('image-uploader image-uploader-url').addClass('pre-image-uploader');
                 $dropzone.find('div.description').hide();
                 $dropzone.append($cancel);
                 $dropzone.find('.js-cancel').on('click', function () {
                     $dropzone.find('img.js-upload-target').attr({'src': ''});
                     $dropzone.find('div.description').show();
+                    $dropzone.delay(2500).animate({opacity: 100}, 1000, function () {
+                        self.init();
+                    });
+
+                    $dropzone.trigger("uploadsuccess", 'http://');
                     self.initWithDropzone();
                 });
             },

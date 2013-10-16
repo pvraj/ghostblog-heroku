@@ -1,18 +1,18 @@
-var _ = require('underscore'),
-    moment = require('moment'),
-    downsize = require('downsize'),
-    when = require('when'),
-    hbs = require('express-hbs'),
+var _           = require('underscore'),
+    moment      = require('moment'),
+    downsize    = require('downsize'),
+    when        = require('when'),
+    hbs         = require('express-hbs'),
     packageInfo = require('../../../package.json'),
-    errors = require('../errorHandling'),
-    models = require('../models'),
+    errors      = require('../errorHandling'),
+    models      = require('../models'),
     coreHelpers;
 
 
 coreHelpers = function (ghost) {
     var paginationHelper,
         scriptTemplate = _.template("<script src='/built/scripts/<%= name %>?v=<%= version %>'></script>"),
-        isProduction = process.env.NODE_ENV === "production",
+        isProduction = process.env.NODE_ENV === 'production',
         version = encodeURIComponent(packageInfo.version);
 
     /**
@@ -34,7 +34,7 @@ coreHelpers = function (ghost) {
             }
         }
 
-        var f = options.hash.format || "MMM Do, YYYY",
+        var f = options.hash.format || 'MMM Do, YYYY',
             timeago = options.hash.timeago,
             date;
 
@@ -76,7 +76,7 @@ coreHelpers = function (ghost) {
         }
 
         if (models.isPost(this)) {
-            output += "/" + this.slug + '/';
+            output += '/' + this.slug + '/';
         }
 
         return output;
@@ -91,7 +91,7 @@ coreHelpers = function (ghost) {
     // if the author could not be determined.
     //
     ghost.registerThemeHelper('author', function (context, options) {
-        return this.author ? this.author.name : "";
+        return this.author ? this.author.name : '';
     });
 
     // ### Tags Helper
@@ -106,10 +106,10 @@ coreHelpers = function (ghost) {
     // Note that the standard {{#each tags}} implementation is unaffected by this helper
     // and can be used for more complex templates.
     ghost.registerThemeHelper('tags', function (options) {
-        var separator = ", ",
+        var separator = ', ',
             tagNames;
 
-        if (typeof options.hash.separator === "string") {
+        if (typeof options.hash.separator === 'string') {
             separator = options.hash.separator;
         }
 
@@ -133,7 +133,7 @@ coreHelpers = function (ghost) {
     //
     ghost.registerThemeHelper('content', function (options) {
         var truncateOptions = (options || {}).hash || {};
-        truncateOptions = _.pick(truncateOptions, ["words", "characters"]);
+        truncateOptions = _.pick(truncateOptions, ['words', 'characters']);
 
         if (truncateOptions.words || truncateOptions.characters) {
             return new hbs.handlebars.SafeString(
@@ -162,10 +162,10 @@ coreHelpers = function (ghost) {
         var truncateOptions = (options || {}).hash || {},
             excerpt;
 
-        truncateOptions = _.pick(truncateOptions, ["words", "characters"]);
+        truncateOptions = _.pick(truncateOptions, ['words', 'characters']);
 
         /*jslint regexp:true */
-        excerpt = String(this.html).replace(/<\/?[^>]+>/gi, "");
+        excerpt = String(this.html).replace(/<\/?[^>]+>/gi, '');
         /*jslint regexp:false */
 
         if (!truncateOptions.words && !truncateOptions.characters) {
@@ -179,13 +179,19 @@ coreHelpers = function (ghost) {
 
 
     ghost.registerThemeHelper('body_class', function (options) {
-        var classes = [];
+        var classes = [],
+            tags = this.post && this.post.tags ? this.post.tags : this.tags || [];
+
         if (_.isString(this.path) && this.path.match(/\/page/)) {
             classes.push('archive-template');
         } else if (!this.path || this.path === '/' || this.path === '') {
             classes.push('home-template');
         } else {
             classes.push('post-template');
+        }
+
+        if (tags) {
+            classes = classes.concat(tags.map(function (tag) { return 'tag-' + tag.slug; }));
         }
 
         return ghost.doFilter('body_class', classes, function (classes) {
@@ -195,10 +201,11 @@ coreHelpers = function (ghost) {
     });
 
     ghost.registerThemeHelper('post_class', function (options) {
-        var classes = ['post'];
+        var classes = ['post'],
+            tags = this.post && this.post.tags ? this.post.tags : this.tags || [];
 
-        if (this.tags) {
-            classes = classes.concat(this.tags.map(function (tag) { return "tag-" + tag.name; }));
+        if (tags) {
+            classes = classes.concat(tags.map(function (tag) { return 'tag-' + tag.slug; }));
         }
 
         return ghost.doFilter('post_class', classes, function (classes) {
@@ -208,12 +215,15 @@ coreHelpers = function (ghost) {
     });
 
     ghost.registerThemeHelper('ghost_head', function (options) {
-        var head = [];
-        head.push('<meta name="generator" content="Ghost ' + this.version + '" />');
+        var head = [],
+            majorMinor = /^(\d+\.)?(\d+)/,
+            trimmedVersion = this.version.match(majorMinor)[0];
+
+        head.push('<meta name="generator" content="Ghost ' + trimmedVersion + '" />');
         head.push('<link rel="alternate" type="application/rss+xml" title="RSS" href="/rss/">');
 
         return ghost.doFilter('ghost_head', head, function (head) {
-            var headString = _.reduce(head, function (memo, item) { return memo + "\n" + item; }, '');
+            var headString = _.reduce(head, function (memo, item) { return memo + '\n' + item; }, '');
             return new hbs.handlebars.SafeString(headString.trim());
         });
     });
@@ -292,7 +302,7 @@ coreHelpers = function (ghost) {
             j = 0,
             columns = options.hash.columns,
             key,
-            ret = "",
+            ret = '',
             data;
 
         if (options.data) {
@@ -356,18 +366,18 @@ coreHelpers = function (ghost) {
     });
 
     // A helper for inserting the javascript tags with version hashes
-    ghost.registerThemeHelper("ghostScriptTags", function () {
+    ghost.registerThemeHelper('ghostScriptTags', function () {
         var scriptFiles = [];
 
         if (isProduction) {
             scriptFiles.push("ghost.min.js");
         } else {
             scriptFiles = [
-                "vendor.js",
-                "helpers.js",
-                "templates.js",
-                "models.js",
-                "views.js"
+                'vendor.js',
+                'helpers.js',
+                'templates.js',
+                'models.js',
+                'views.js'
             ];
         }
 
@@ -378,7 +388,7 @@ coreHelpers = function (ghost) {
             });
         });
 
-        return scriptFiles.join("");
+        return scriptFiles.join('');
     });
 
     // ## Template driven helpers
@@ -402,9 +412,6 @@ coreHelpers = function (ghost) {
                     || (!_.isUndefined(this.pagination.prev) && !_.isNumber(this.pagination.prev))) {
                 errors.logAndThrowError('Invalid value, Next/Prev must be a number');
                 return;
-            }
-            if (_.isString(this.pagination.total)) {
-                this.pagination.total = parseInt(this.pagination.total);
             }
             if (!_.isNumber(this.pagination.page) || !_.isNumber(this.pagination.pages)
                     || !_.isNumber(this.pagination.total) || !_.isNumber(this.pagination.limit)) {

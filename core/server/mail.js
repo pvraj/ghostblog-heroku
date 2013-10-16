@@ -1,8 +1,8 @@
-var cp = require('child_process'),
-    url = require('url'),
-    _ = require('underscore'),
-    when = require('when'),
-    nodefn = require('when/node/function'),
+var cp         = require('child_process'),
+    url        = require('url'),
+    _          = require('underscore'),
+    when       = require('when'),
+    nodefn     = require('when/node/function'),
     nodemailer = require('nodemailer');
 
 function GhostMailer(opts) {
@@ -51,7 +51,7 @@ GhostMailer.prototype.detectSendmail = function () {
             if (err && !/bin\/sendmail/.test(stdout)) {
                 return reject();
             }
-            resolve(stdout.toString());
+            resolve(stdout.toString().replace(/(\n|\r|\r\n)$/, ''));
         });
     });
 };
@@ -95,7 +95,7 @@ GhostMailer.prototype.send = function (message) {
         return when.reject(new Error('Email Error: Incomplete message data.'));
     }
 
-    var from = 'ghost-mailer@' + url.parse(this.ghost.config().url).hostname,
+    var from = this.ghost.config().mail.fromaddress || this.ghost.settings('email'),
         to = message.to || this.ghost.settings('email'),
         sendMail = nodefn.lift(this.transport.sendMail.bind(this.transport));
 
