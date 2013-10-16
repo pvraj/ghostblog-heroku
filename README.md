@@ -5,7 +5,7 @@
 - `git clone https://github.com/stevepeak/ghostblog-heroku.git`
 - `cd ghostblog-heroku`
 - `heroku create :app-name`
-- `heroku addons:add cleardb:ignite`
+- `heroku addons:add cleardb:ignite sendgrid:starter`
 - `heroku config`
 - Update your heroku config to match the following below with your database credentials
 
