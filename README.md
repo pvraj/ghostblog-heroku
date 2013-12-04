@@ -1,22 +1,40 @@
-# Ghost
+# Ghost blog setup on Heroku
 
-## Install Instructions
+The ghost blog works very well on Heroku, the only problem is the images.
 
-- `git clone https://github.com/stevepeak/ghostblog-heroku.git`
-- `cd ghostblog-heroku`
-- `heroku create :app-name`
-- `heroku addons:add cleardb:ignite sendgrid:starter`
-- `heroku config`
-- Update your heroku config to match the following below with your database credentials
+Heroku just store the upload images for a short time, the solution is the Amazon S3 service, but I don't try to change the Ghost for use it.
+
+**This is a small guide for Ghost work on Heroku:**
+
+`git clone https://github.com/patrickespake/ghostblog-heroku.git`
+
+`cd ghostblog-heroku`
+
+`heroku create :app-name`
+
+`heroku addons:add heroku-postgresql:dev`
+
+`heroku addons:add sendgrid:starter`
+
+**Get the Heroku config variables:**
+
+`heroku config`
+
+**And set the variables for work with Ghost:**
+
+You can get the values for the database variables in https://postgres.heroku.com/databases and select your database.
 
 ```sh
-heroku config:set MYSQL_DATABASE=<value> \
-  MYSQL_HOST=<value> \
-  MYSQL_PASSWORD=<value> \
-  MYSQL_USER=<value> \
+heroku config:set POSTGRES_DATABASE=<value> \
+  POSTGRES_HOST=<value> \
+  POSTGRES_PASSWORD=<value> \
+  POSTGRES_USER=<value> \
   MY_URL=http://your-url.com \
   NODE_ENV=production
 ```
 
-- `git push heroku master`
-- **Fin.** Enjoy. Goto http://your-url.com/ghost/signup/ to start
+**Send the code to Heroku:**
+
+`git push heroku master`
+
+Enjoy! Go to http://your-url.com/ghost/signup/ to start.

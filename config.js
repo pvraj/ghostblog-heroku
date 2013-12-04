@@ -19,12 +19,13 @@ config = {
             }
         },
         database: {
-            client: 'mysql',
+            client: 'postgres',
             connection: {
-                user: process.env.MYSQL_USER,
-                password: process.env.MYSQL_PASSWORD,
-                host: process.env.MYSQL_HOST,
-                database: process.env.MYSQL_DATABASE
+                user: process.env.POSTGRES_USER,
+                password: process.env.POSTGRES_PASSWORD,
+                host: process.env.POSTGRES_HOST,
+                database: process.env.POSTGRES_DATABASE,
+                port: '5432'
             },
             debug: false
         },
