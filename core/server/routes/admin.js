@@ -45,6 +45,14 @@ module.exports = function (server) {
         res.redirect(301, root + '/ghost/signin/');
     });
 
+    server.get('/ghost/about', function(req, res) {
+        res.render('about')
+    });
+
+    server.get('/ghost/home', function(req, res) {
+        res.render('home')
+    });
+
     server.get('/ghost/signout/', admin.logout);
     server.get('/ghost/signin/', redirectToSignup, middleware.redirectToDashboard, admin.login);
     server.get('/ghost/signup/', middleware.redirectToDashboard, admin.signup);
