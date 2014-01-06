@@ -66,9 +66,6 @@ frontendControllers = {
             return next(e);
         });
     },
-    'landing': function (req, res, next) {
-        res.render('landing',{});
-    },
     'single': function (req, res, next) {
         api.posts.read(_.pick(req.params, ['id', 'slug'])).then(function (post) {
             if (post) {
