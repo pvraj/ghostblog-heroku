@@ -1,5 +1,0 @@
-#!/bin/bash
-#
-# Compile the scss files before commiting
-sass assets/scss/main.scss screen.css
-
