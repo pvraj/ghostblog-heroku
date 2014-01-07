@@ -378,19 +378,27 @@ margin on the iframe, cause it breaks stuff. */
 }
 .site-head.landing{
     height:100%;
-    position:absolute;
+    position:relative;
 }
 .landing-nav{
     position:absolute;
     top:0;
     left:0;
-    padding:20px 30px;
+    padding:20px 20px;
 }
 .landing-nav a{
-    font-size:17px;
+    padding:0.5em 1em;
+    font-size:1.8rem;
     color:white;
-    margin-right:20px;
+
     text-decoration: none;
+    font-family: 'Montserrat', sans-serif;
+}
+.landing-nav a.active{
+    background:rgba(150,150,150,0.3);
+}
+.landing-nav a:hover{
+    background:rgba(150,150,150,0.5);
 }
 
 .blog-logo {
@@ -417,10 +425,10 @@ margin on the iframe, cause it breaks stuff. */
 
 .blog-description {
     margin: 0;
-    font-size: 1.8rem;
+    font-size: 2.8rem;
     line-height: 1.5em;
     font-weight: 300;
-    font-family: 'Open Sans', serif;
+    font-family: 'Montserrat', sans-serif;
     letter-spacing: 0;
 }
 
@@ -814,6 +822,7 @@ margin on the iframe, cause it breaks stuff. */
         height: auto;
         min-height: 240px;
         padding: 15% 0;
+        height:100%;
     }
 
     .blog-title {
@@ -822,8 +831,11 @@ margin on the iframe, cause it breaks stuff. */
     }
 
     .blog-description {
-        font-size: 1.7rem;
-        line-height: 1.5em;
+        font-size: 2.7rem;
+        line-height: 2.5em;
+    }
+    .landing-nav a{
+    font-size:1.7rem;
     }
 
     .post {
@@ -886,6 +898,7 @@ margin on the iframe, cause it breaks stuff. */
 
     .site-head {
         padding: 10% 0;
+        height:100%;
     }
 
     .blog-title {
@@ -893,7 +906,10 @@ margin on the iframe, cause it breaks stuff. */
     }
 
     .blog-description {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+    }
+    .landing-nav a{
+    font-size:1.5rem;
     }
 
 
